@@ -1,0 +1,14 @@
+Package: sharedLogit
+Type: Package
+Title: Borrowing among coefficients using prior information
+Version: 0.1
+Date: 2018-06-30
+Author: Sally Paganin 
+Maintainer: Sally Paganin <paganin@stat.unipd.it>
+Description: 
+License: GPL (>= 3)
+Imports:
+    Rcpp (>= 0.11.0),
+Depends:
+    mvtnorm (>= 0.9)
+LinkingTo: Rcpp, RcppArmadillo
