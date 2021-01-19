@@ -13,7 +13,7 @@
 using namespace Rcpp;
 
 class DPGLOGIT{
-  // Grouped logistic regression using exchangeable prior
+  // Grouped logistic regression using CP process prior
   // @n_iter = number of iterations
   // @Y_list = list of response variables [j][n_j x 1]
   // @X_list = list of explanatory variables [j][n_j x p]

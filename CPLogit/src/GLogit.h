@@ -261,7 +261,7 @@ void GLOGIT::updateClass(int iter)
      class_probs.slice(iter).row(j) =  normalize_probs(prob_tmp).t();
      clustering_to_update(j) = as<int>(wrap(Rcpp::RcppArmadillo::sample(class_labels, 1, TRUE, as<NumericVector>(wrap(class_probs.slice(iter).row(j).t())))));
   }
-
+  
   clustering.col(iter) = clustering_to_update;
 }
 

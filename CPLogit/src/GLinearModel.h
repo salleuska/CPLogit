@@ -13,7 +13,7 @@
 using namespace Rcpp;
 
 class GLINEAR{
-  // Grouped logistic regression using exchangeable prior
+  // Grouped linear regression using exchangeable prior
   // @n_iter = number of iterations
   // @Y_list = list of response variables [j][n_j x 1]
   // @X_list = list of explanatory variables [j][n_j x p]
@@ -65,7 +65,7 @@ public:
   //=========== METHODS =============//
   // Initialize prior values
   void setPrior();
-  void updatePolyaVars(int iter);
+//  void updatePolyaVars(int iter);
   void updateIntercept(int iter);
   void updateBeta(int iter);
   void updateClass(int iter);

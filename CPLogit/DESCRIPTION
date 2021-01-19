@@ -12,3 +12,4 @@ Imports:
 Depends:
     mvtnorm (>= 0.9)
 LinkingTo: Rcpp, RcppArmadillo
+RoxygenNote: 7.1.0
