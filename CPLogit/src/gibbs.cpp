@@ -31,7 +31,7 @@ using namespace Rcpp;
 //' @param n_iter0 total number of iterations
 //' @export
 // [[Rcpp::export]]
-List DPgibbsLinear(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_par,  double H, double H_upper, double alpha,double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0){
+List gibbsLinearCP(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_par,  double H, double H_upper, double alpha,double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0){
   
   DPGLINEAR my_mod(X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha, a_prior, tau_prior, b_prior, Q_prior, n_iter0);
   
@@ -80,9 +80,10 @@ List DPgibbsLinear(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_pa
 //' @param n_iter0 total number of iterations
 //' @export
 // [[Rcpp::export]]
-List DPgibbsLogit(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_par,  double H, double alpha,double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior,  int n_iter0){
+List gibbsLogitCP(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_par,  double H, double H_upper,
+  double alpha,double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior,  int n_iter0){
 
-  GLOGIT my_mod(X_list0, Y_list0, Z_prior, psi_par,  H, alpha, a_prior, tau_prior, b_prior, Q_prior, n_iter0);
+  DPGLOGIT my_mod(X_list0, Y_list0, Z_prior, psi_par,  H, H_upper, alpha, a_prior, tau_prior, b_prior, Q_prior, n_iter0);
 
   Rcout << "setPriorfunction" << "\n";
   my_mod.setPrior();
@@ -117,7 +118,7 @@ List DPgibbsLogit(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_par
 //' @param n_iter0 total number of iterations
 //' @export
 // [[Rcpp::export]]
-List gibbsPGLogit(arma::vec Y0, arma::mat X0, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0)
+List gibbsLogit(arma::vec Y0, arma::mat X0, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0)
 {
 
   PGLOGIT my_mod( Y0, X0, a_prior, tau_prior,  b_prior,  Q_prior, n_iter0);
@@ -153,7 +154,7 @@ List gibbsPGLogit(arma::vec Y0, arma::mat X0, double a_prior, double tau_prior, 
 //' @param n_iter0 total number of iterations
 //' @export
 // [[Rcpp::export]]
-List gibbsLinearModel(arma::vec Y0, arma::mat X0, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0)
+List gibbsLinear(arma::vec Y0, arma::mat X0, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0)
 {
 
   LINEARMODEL my_mod( Y0, X0, a_prior, tau_prior,  b_prior,  Q_prior, n_iter0);

@@ -4,7 +4,7 @@
 #include  "dist_from.h"
 
 // Function which compute the VI distance from c0
-// and all the other partition in the namespace
+// and all the other partition in the space
 // Generate all the space by using code form fxt library
 
 // Return also blocks sizes for each partition (suff stats for eppf)
@@ -32,8 +32,17 @@ using namespace Rcpp;
 // }
 
 // Bell numbers - 0 to 25 - sequence A000110
-unsigned long long bell_array[] = { 1,1,2,5,15,52,203,877,4140,21147,115975,678570, 4213597,27644437,190899322,1382958545 ,10480142147, 82864869804,682076806159,5832742205057, 51724158235372,474869816156751,4506715738447323, 44152005855084346,445958869294805289, 4638590332229999353};
+unsigned long long bell_array[] = {1,1,2,5,15,52,203,877,4140,21147,115975,678570, 4213597,27644437,190899322,1382958545 ,10480142147, 82864869804,682076806159,5832742205057, 51724158235372,474869816156751,4506715738447323, 44152005855084346,445958869294805289, 4638590332229999353};
 
+
+//' This function compute the variation of information
+//' from a given clustering c0 and all the other partition in the space.
+//' Generate space of all partitions using code form fxt library.
+//' The function returns the distances and block dimensions for each partitions generated. 
+//'
+//' @param clust clustering of interest
+//' @param return_partitions boolean, if TRUE the function returns all the partitions in the space
+//' @export
 // [[Rcpp::export]]
 List dist_from(arma::uvec clust, bool return_partitions = false)
 {

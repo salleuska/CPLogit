@@ -30,6 +30,13 @@ double entropy(arma::uvec cl) {
   return  H_c;
 }
 
+
+//' This function compute the variation of information
+//' between two clustering
+//'
+//' @param cl1 vector of clustering labels
+//' @param cl2 vector of clustering labels
+//' @export
 // [[Rcpp::export]]
 double vi_distC(arma::uvec cl1, arma::uvec cl2) {
 
