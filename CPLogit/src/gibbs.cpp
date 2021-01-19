@@ -11,6 +11,7 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
+
 // [[Rcpp::export]]
 List DPgibbsLinear(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_par,  double H, double H_upper, double alpha,double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0){
   

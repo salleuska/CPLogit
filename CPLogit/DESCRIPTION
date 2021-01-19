@@ -1,12 +1,12 @@
 Package: CPLogit
 Type: Package
-Title: Borrowing among coefficients using prior information
+Title: Borrowing between regression coefficients using prior information on clustering
 Version: 0.1
 Date: 2018-06-30
 Author: Sally Paganin 
-Maintainer: Sally Paganin <paganin@stat.unipd.it>
-Description: 
-License: GPL (>= 3)
+Maintainer: Sally Paganin <sally.paganin@berkeley.edu>
+Description: The CPLogit package provide functions to estimate Bayesian linear and logistic models using the Centered Partition (CP) process prior described in the paper Centered Partition Processes: Informative Priors for Clustering. 
+License: GPL-3 + file LICENSE
 Imports:
     Rcpp (>= 0.11.0),
 Depends:
