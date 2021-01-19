@@ -1,4 +1,4 @@
-# CPLogit
+# Supplementary code for Bayesian linear and logistic regression using Centered Partition processes
 
 Code to reproduce results presented in [Centered Partition Processes: Informative Priors for Clustering](https://projecteuclid.org/euclid.ba/1581584439#abstract).
 
