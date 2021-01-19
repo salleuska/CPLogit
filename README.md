@@ -21,6 +21,7 @@ Be sure to have installed the following R packages
 Download and install the package `CPLogit` using `devtools` and `Rcppp` packages
 
 ```r
+setwd("CPLogit/")
 library(devtools)
 
 clean_dll()
