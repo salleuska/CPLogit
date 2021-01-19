@@ -1,8 +1,6 @@
 # CPLogit
 
-CCode for grouped logistic regression using Centered Partition process with DP base EPPF
-
-[Centered Partition Processes: Informative Priors for Clustering](https://projecteuclid.org/euclid.ba/1581584439#abstract)
+Code to reproduce results presented in [Centered Partition Processes: Informative Priors for Clustering](https://projecteuclid.org/euclid.ba/1581584439#abstract).
 
 ## Installation
 
