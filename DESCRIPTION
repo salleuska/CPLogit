@@ -1,4 +1,4 @@
-Package: sharedLogit
+Package: CPLogit
 Type: Package
 Title: Borrowing among coefficients using prior information
 Version: 0.1
