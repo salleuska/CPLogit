@@ -16,6 +16,7 @@ Be sure to have installed the following R packages
 	install.packages("dplyr")
 	install.packages("sdols")
 	install.packages("mcclust")
+	install.packages("mvtnorm")
 ```
 
 Download and install the package `CPLogit` using `devtools` and `Rcppp` packages
