@@ -41,6 +41,9 @@ build()
 install()
 document()
  -->
+## Reproduce plots in Section 3.3
+
+To reproduce code of the prior probability distribution over the set partition space induced by the CP process, use script `Sec3.3_Prior_graphs.R`.
 
 ## Reproduce simulation results
 
