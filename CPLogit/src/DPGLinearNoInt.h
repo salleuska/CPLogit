@@ -1,6 +1,6 @@
-// Grouped Linear regression for multiple dataset
-#ifndef DPGLINEAR_H
-#define DPGLINEAR_H
+// Grouped linear model ( Linear regression with only regressors by group)
+#ifndef DPGLINEARNOINT_H
+#define DPGLINEARNOINT_H
 
 #include <RcppArmadillo.h>
 #include "priorDirichlet.h"
@@ -12,7 +12,7 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
 
-class DPGLINEAR{
+class DPGLINEARNOINT{
   // Grouped normal regression using exchangeable prior
   // @n_iter = number of iterations
   // @Y_list = list of response variables [j][n_j x 1]
@@ -47,12 +47,13 @@ public:
   // @beta       = grouped regression coefficients
   // @omega      = polya-gamma latent variables
   // @clustering = clustering vector
-  arma::mat intercept; arma::cube beta;
+  // arma::mat intercept; 
+  arma::cube beta;
   arma::field<arma::vec> omega;
   arma::umat clustering;
   // ---- Hypermarameters ---- //
   // Intercept ~ N(a0, tau0)
-  double a0; double tau0;
+  // double a0; double tau0;
   // Beta coefficients ~ Np(b0, Q)
   arma::vec b0; arma::mat Q0;
   // ---- utilities ---- //
@@ -62,7 +63,7 @@ public:
 public:
   //=========== CONSTRUCTOR =============//
   // Create the model and allocate objects related to quntities of interest
-  DPGLINEAR(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_par,  double H, double H_upper,  double alpha, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0);
+  DPGLINEARNOINT(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_par,  double H, double H_upper,  double alpha, arma::vec b_prior, arma::mat Q_prior, int n_iter0);
   
   //=========== METHODS =============//
   // Initialize prior values
@@ -73,7 +74,7 @@ public:
 };
 
 //=========== CONSTRUCTOR =============//
-DPGLINEAR::DPGLINEAR(List X_list0, List Y_list0, arma::uvec Z_prior,double psi_par, double H, double H_upper, double alpha, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0) : prior(H, H_upper, alpha, X_list0.size())
+DPGLINEARNOINT::DPGLINEARNOINT(List X_list0, List Y_list0, arma::uvec Z_prior,double psi_par, double H, double H_upper, double alpha, arma::vec b_prior, arma::mat Q_prior, int n_iter0) : prior(H, H_upper, alpha, X_list0.size())
 {
   // Number of datastes
   n = X_list0.size();
@@ -100,10 +101,10 @@ DPGLINEAR::DPGLINEAR(List X_list0, List Y_list0, arma::uvec Z_prior,double psi_p
   // Set upper bound for number of classes and interations number
   H0 = H; H_up = H_upper; n_iter = n_iter0;
   // Set Hypermarameters
-  a0 = a_prior; tau0 = tau_prior;
+  // a0 = a_prior; tau0 = tau_prior;
   b0 = b_prior; Q0 = Q_prior;
   // Set size of parameters of interest
-  intercept.zeros(n, n_iter);
+  // intercept.zeros(n, n_iter);
   beta.zeros(H_up, p, n_iter);
   // Cluster allocation and class labels
   clustering.set_size(n, n_iter0);
@@ -118,7 +119,7 @@ DPGLINEAR::DPGLINEAR(List X_list0, List Y_list0, arma::uvec Z_prior,double psi_p
 // Set prior values
 //---------------------------------//
 
-void DPGLINEAR::setPrior()
+void DPGLINEARNOINT::setPrior()
 {
   arma::uvec temp_clust(n);
   // Random allocation of observations to classes - label 0 to H0-1
@@ -127,7 +128,7 @@ void DPGLINEAR::setPrior()
     // temporary labels
     temp_clust(i)= as<int>(wrap(Rcpp::sample(class_labels, 1, FALSE)));
     // sample intercep for each dataset
-    intercept(i, 0) = ::Rf_rnorm(a0, sqrt(1/tau0));
+    //intercept(i, 0) = ::Rf_rnorm(a0, sqrt(1/tau0));
   }
   
   // rename labels to have no gaps
@@ -149,24 +150,24 @@ void DPGLINEAR::setPrior()
 //---------------------------------//
 // update intercept term
 //---------------------------------//
-void DPGLINEAR::updateIntercept(int iter)
-{
-  for(int j = 0; j < n; ++j)
-  {
-    // Update precision parameter
-    double tau_star= tau0 + n;
-    // update mean parameter
-    double den = (1/tau0)/(1/tau0 + 1/n);
-    double y_mean = sum(Y_list(j))/n;
-    double a_star = y_mean*(1/tau0)/den + a0/den;
-    intercept(iter) = ::Rf_rnorm(a_star, sqrt(1/tau_star));
+// void DPGLINEARNOINT::updateIntercept(int iter)
+// {
+//   for(int j = 0; j < n; ++j)
+//   {
+//     // Update precision parameter
+//     double tau_star= tau0 + n;
+//     // update mean parameter
+//     double den = (1/tau0)/(1/tau0 + 1/n);
+//     double y_mean = sum(Y_list(j))/n;
+//     double a_star = y_mean*(1/tau0)/den + a0/den;
+//     intercept(iter) = ::Rf_rnorm(a_star, sqrt(1/tau_star));
     
-  }
-}
+//   }
+// }
 //------------------------------------//
 // update coefficients for each class H
 //------------------------------------//
-void DPGLINEAR::updateBeta(int iter){
+void DPGLINEARNOINT::updateBeta(int iter){
   // Useful quantities to compute the updated parameters
   arma::mat quadratic_form(p, p, arma::fill::zeros);
   arma::mat xtk_tmp(p, 1, arma::fill::zeros);
@@ -214,7 +215,7 @@ void DPGLINEAR::updateBeta(int iter){
 //-----------------------------------------------------------/
 // Update class allocation using prior info about clustering
 //-----------------------------------------------------------/
-void DPGLINEAR::updateClass(int iter)
+void DPGLINEARNOINT::updateClass(int iter)
 {
   // Save current clustering configuration - to update sequentially
   arma::uvec clustering_to_update = clustering.col(iter-1);
@@ -261,7 +262,7 @@ void DPGLINEAR::updateClass(int iter)
       // Compute lilkelihood for observed classes
       for(int h = 0; h < H_minus_i; ++h)
       {
-        reg = (intercept(i, iter) + X_list(i)*beta.slice(iter).row(h).t());
+        reg = X_list(i)*beta.slice(iter).row(h).t();
         log_lik = -0.5*sum(arma::square(Y_list(i) - reg));
         log_p_tmp(h) += log_lik;
       }
@@ -270,7 +271,7 @@ void DPGLINEAR::updateClass(int iter)
       // sample a new value for beta for the class H_minus_i + 1
       beta_new = rndpp_mvnormal(1, b0, Q0);
       
-      reg = (intercept(i, iter) + X_list(i)*beta_new.t());
+      reg = X_list(i)*beta_new.t();
       log_p_tmp.tail(1) = prior.log_new_class -0.5*sum(arma::square(Y_list(i) - reg));
       //-------------------------------------------------
       // Add penalization
@@ -348,7 +349,7 @@ void DPGLINEAR::updateClass(int iter)
       
       for(int h = 0; h < H_minus_i; ++h)
       {
-        reg = (intercept(i, iter) + X_list(i)*beta.slice(iter).row(h).t());
+        reg = X_list(i)*beta.slice(iter).row(h).t();
         log_lik = -0.5*sum(arma::square(Y_list(i) - reg));
         log_p_tmp(h) += log_lik;
       }
@@ -358,7 +359,7 @@ void DPGLINEAR::updateClass(int iter)
       // Allocation probability to a new class - Using alg 8 from Neal(2000) m = 1 (lazy)
       // sample a new value for beta for the class H_minus_i + 1
       beta_new = rndpp_mvnormal(1, b0, Q0);
-      reg = (intercept(i, iter) + X_list(i)*beta_new.t());
+      reg = X_list(i)*beta_new.t();
       log_p_tmp.tail(1) = prior.log_new_class -0.5*sum(arma::square(Y_list(i) - reg));
       
       // Check for penalization

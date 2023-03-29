@@ -1,25 +1,25 @@
-// Grouped Linear regression for multiple dataset
-#ifndef DPGLINEAR_H
-#define DPGLINEAR_H
+// Grouped Logistic regression for multiple dataset
+#ifndef DPGLOGITMULTIPLE_HPP
+#define DPGLOGITMULTIPLE_HPP
 
 #include <RcppArmadillo.h>
-#include "priorDirichlet.h"
+#include "priorDP.h"
 #include "marginal_vi.h"
 #include "rndpp_mvnormal.h"
-// #include "PG.h"
+#include "PG.h"
 #include "utilities.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
 
-class DPGLINEAR{
-  // Grouped normal regression using exchangeable prior
+class DPGLOGITMULTIPLE{
+  // Grouped logistic regression using CP process prior
   // @n_iter = number of iterations
   // @Y_list = list of response variables [j][n_j x 1]
   // @X_list = list of explanatory variables [j][n_j x p]
   // @p      = number of variables
   // @H      = upper bound for number of components
-  
+
 public:
   // ---- DIMENSIONS ---- //
   // Number of datasets, variables
@@ -37,8 +37,9 @@ public:
   // List of datasets - regression matrix and response vector
   arma::field<arma::mat> X_list;
   arma::field<arma::vec> Y_list;
-  // base clustering
-  arma::uvec Z0; double psi; int H_Z0;
+  // base clustering - can be more than one
+  arma::umat Z0; 
+  double psi; int H_Z0; int n_Z0;
   // ---- PRIOR DISTRIBUTION ---- //
   // @prior      = Prior distribution for mixture classes
   priorDP prior;
@@ -58,31 +59,39 @@ public:
   // ---- utilities ---- //
   arma::cube class_probs;
   arma::vec class_size;
-  
+
 public:
   //=========== CONSTRUCTOR =============//
   // Create the model and allocate objects related to quntities of interest
-  DPGLINEAR(List X_list0, List Y_list0, arma::uvec Z_prior, double psi_par,  double H, double H_upper,  double alpha, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0);
-  
+  DPGLOGITMULTIPLE(List X_list0, List Y_list0, arma::umat Z_prior, double psi_par,  double H, double H_upper,  double alpha, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0);
+
   //=========== METHODS =============//
   // Initialize prior values
   void setPrior();
+  void updatePolyaVars(int iter);
   void updateIntercept(int iter);
   void updateBeta(int iter);
   void updateClass(int iter);
+  void splitMerge(int iter);
 };
 
+
 //=========== CONSTRUCTOR =============//
-DPGLINEAR::DPGLINEAR(List X_list0, List Y_list0, arma::uvec Z_prior,double psi_par, double H, double H_upper, double alpha, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0) : prior(H, H_upper, alpha, X_list0.size())
+DPGLOGITMULTIPLE::DPGLOGITMULTIPLE(List X_list0, List Y_list0, arma::umat Z_prior,double psi_par, double H, double H_upper, double alpha, double a_prior, double tau_prior, arma::vec b_prior, arma::mat Q_prior, int n_iter0) : prior(H, H_upper, alpha, X_list0.size())
 {
   // Number of datastes
   n = X_list0.size();
   // Base partition
   Z0 = Z_prior; psi = psi_par;
   // HERE _ ADD SIZE OF clustering base
-  arma::uvec Z0_unique = unique(Z0);
-  H_Z0 = Z0_unique.n_elem;
-  
+  n_Z0 = Z0.n_cols;
+  H_Z0 = 0;
+  for(int i = 0; i < n_Z0; ++i) {
+    arma::uvec Z0_unique = unique(Z0.col(i));
+    int tmpH_Z0 = Z0_unique.n_elem;
+    if(tmpH_Z0 > H_Z0) H_Z0 = tmpH_Z0;
+  }
+ 
   // Save field of data list and populate vector of sizes
   n_data.set_size(n); n_data.fill(0);
   X_list.set_size(n); Y_list.set_size(n);
@@ -96,7 +105,7 @@ DPGLINEAR::DPGLINEAR(List X_list0, List Y_list0, arma::uvec Z_prior,double psi_p
     n_data(k) = tmp.n_rows;
   }
   p = X_list(0).n_cols;
-  
+
   // Set upper bound for number of classes and interations number
   H0 = H; H_up = H_upper; n_iter = n_iter0;
   // Set Hypermarameters
@@ -105,6 +114,13 @@ DPGLINEAR::DPGLINEAR(List X_list0, List Y_list0, arma::uvec Z_prior,double psi_p
   // Set size of parameters of interest
   intercept.zeros(n, n_iter);
   beta.zeros(H_up, p, n_iter);
+  // Latent polya-gamma variables
+  omega.set_size(n);
+  for(int j = 0; j < n; ++j)
+  {
+    arma::vec tmp(n_data(j));
+    omega(j) = tmp;
+  }
   // Cluster allocation and class labels
   clustering.set_size(n, n_iter0);
   class_labels = as<IntegerVector>(wrap(seq_len(H0) - 1));
@@ -117,8 +133,7 @@ DPGLINEAR::DPGLINEAR(List X_list0, List Y_list0, arma::uvec Z_prior,double psi_p
 //---------------------------------//
 // Set prior values
 //---------------------------------//
-
-void DPGLINEAR::setPrior()
+void DPGLOGITMULTIPLE::setPrior()
 {
   arma::uvec temp_clust(n);
   // Random allocation of observations to classes - label 0 to H0-1
@@ -129,7 +144,7 @@ void DPGLINEAR::setPrior()
     // sample intercep for each dataset
     intercept(i, 0) = ::Rf_rnorm(a0, sqrt(1/tau0));
   }
-  
+
   // rename labels to have no gaps
   arma::uvec unique_lab = unique(temp_clust);
   if(unique_lab.n_elem < H0)
@@ -147,93 +162,113 @@ void DPGLINEAR::setPrior()
 }
 
 //---------------------------------//
+// update Polya-Gamma latent variables
+//---------------------------------//
+
+void DPGLOGITMULTIPLE::updatePolyaVars(int iter)
+{
+ for(int j = 0; j < n; ++j)
+ {
+   arma::uword index_beta = clustering(j, iter -1);
+   arma::vec pgshape(n_data(j)); arma::vec pgscale(n_data(j));
+   pgshape.ones();
+   pgscale = intercept(j, iter - 1) + X_list(j)*beta.slice(iter -1).row(index_beta).t();
+   omega(j) = rpg(pgshape, pgscale);
+ }
+}
+//---------------------------------//
 // update intercept term
 //---------------------------------//
-void DPGLINEAR::updateIntercept(int iter)
+void DPGLOGITMULTIPLE::updateIntercept(int iter)
 {
-  for(int j = 0; j < n; ++j)
-  {
-    // Update precision parameter
-    double tau_star= tau0 + n;
-    // update mean parameter
-    double den = (1/tau0)/(1/tau0 + 1/n);
-    double y_mean = sum(Y_list(j))/n;
-    double a_star = y_mean*(1/tau0)/den + a0/den;
-    intercept(iter) = ::Rf_rnorm(a_star, sqrt(1/tau_star));
-    
-  }
+ for(int j = 0; j < n; ++j)
+ {
+   // Update precision parameter
+   double tau_star= tau0 + sum(omega(j));
+   // Compute k values using polya-gamma augmented vars and update mean parameter
+   arma::uword index_group = clustering(j, iter -1);
+   arma::mat xbeta = (X_list(j)*beta.slice(iter -1).row(index_group).t());
+   double k = sum(Y_list(j) - 0.5 - omega(j)%xbeta);
+   double a_star = (a0*tau0 + k)/tau_star;
+   intercept(j, iter) = ::Rf_rnorm(a_star, sqrt(1/tau_star));
+ }
 }
 //------------------------------------//
 // update coefficients for each class H
 //------------------------------------//
-void DPGLINEAR::updateBeta(int iter){
+void DPGLOGITMULTIPLE::updateBeta(int iter)
+{
   // Useful quantities to compute the updated parameters
   arma::mat quadratic_form(p, p, arma::fill::zeros);
   arma::mat xtk_tmp(p, 1, arma::fill::zeros);
   arma::uvec sel;
-  
+
   // utilities
   arma::mat half_prod;
   arma::vec k_j;
   // updated parameters
   arma::mat Q_star(p, p, arma::fill::zeros);
   arma::vec b_star(p, arma::fill::zeros);
-  
+
   for(int h = 0; h < H0; ++h)
   {
     arma::uvec sel = find(clustering.col(iter-1) == h);
     class_size(h) = sel.n_elem;
-    
+
     if(class_size(h) > 0){
       for(int j = 0; j < class_size(h); ++j)
       {
-        // compute quadratic form X^T  X
-        quadratic_form = X_list(sel(j)).t()*X_list(sel(j));
-        xtk_tmp = X_list(sel(j)).t()*Y_list(sel(j));
+        // compute quadratic form X^T Omega X
+        half_prod = X_list(sel(j)).each_col()%sqrt(omega(sel(j)));
+        quadratic_form += half_prod.t()*half_prod;
+
+        // compute polya-gamma residuals
+        k_j = Y_list(sel(j)) - 0.5 - omega(sel(j))*intercept(sel(j), iter);
+        xtk_tmp += X_list(sel(j)).t()*k_j;
       }
-      
+
       Q_star = arma::inv(quadratic_form + arma::inv(Q0));
-      b_star = Q_star*xtk_tmp;
-      
+      b_star = Q_star*(xtk_tmp + arma::inv(Q0)*b0);
+
       // sample value for beta
       beta.slice(iter).row(h) = rndpp_mvnormal(1, b_star, Q_star);
-      
+
     }
     else
     {
       // sample from the prior distribution
       beta.slice(iter).row(h) = rndpp_mvnormal(1, b0, Q0);
     }
-    
+
     // reset tmp quantities
     quadratic_form.zeros(); xtk_tmp.zeros();
   }
-  
+
 }
 
 //-----------------------------------------------------------/
 // Update class allocation using prior info about clustering
 //-----------------------------------------------------------/
-void DPGLINEAR::updateClass(int iter)
+void DPGLOGITMULTIPLE::updateClass(int iter)
 {
-  // Save current clustering configuration - to update sequentially
+// Save current clustering configuration - to update sequentially
   arma::uvec clustering_to_update = clustering.col(iter-1);
   // utilities - clustering part
   arma::uvec unique_vals; int H_minus_i;
   arma::uvec clust_minus_i(n, arma::fill::zeros);
   arma::vec class_size_minus_i(n, arma::fill::zeros);
   NumericVector class_lab_minus_i;
-  
+
   // utilities - likelihood
   arma::vec reg; double log_lik;
   arma::mat beta_new(1,p, arma::fill::zeros);
   // allocation probability vector for obs i
   arma::vec log_p_tmp; arma::vec p_class;
-  
+
   // penalization
+  arma::mat distMat;
   arma::vec dist;
-  
-  
+
   for(int i = 0; i < n; ++i)
   {
     // copy current clustering configurations
@@ -242,45 +277,56 @@ void DPGLINEAR::updateClass(int iter)
     clust_minus_i.shed_row(i);
     unique_vals = unique(clust_minus_i);
     H_minus_i = unique_vals.n_elem;
-    
+
     if(H0 - H_minus_i == 0){
-      
+
       // Observation is NOT a singleton
       log_p_tmp.set_size(H_minus_i + 1);
       dist.set_size(H_minus_i + 1);
-      
-      
+
+
       // Obtain vector of class sizes from the available one
       // by decreasing by one the corresponding class count
       class_size(clustering_to_update(i)) -= 1;
       class_size_minus_i = class_size.head(H_minus_i);
       // Allocation probability to an observed class
       log_p_tmp.head(H_minus_i) = prior.log_conditional(class_size_minus_i);
-      
+
       //-------------------------------------------------
       // Compute lilkelihood for observed classes
       for(int h = 0; h < H_minus_i; ++h)
       {
         reg = (intercept(i, iter) + X_list(i)*beta.slice(iter).row(h).t());
-        log_lik = -0.5*sum(arma::square(Y_list(i) - reg));
+        log_lik = sum(Y_list(i)%reg  - log(1 + exp(reg)));
         log_p_tmp(h) += log_lik;
       }
       //---------------
       // Allocation probability to a new class - Using alg 8 from Neal(2000) m = 1 (lazy)
       // sample a new value for beta for the class H_minus_i + 1
       beta_new = rndpp_mvnormal(1, b0, Q0);
-      
+
       reg = (intercept(i, iter) + X_list(i)*beta_new.t());
-      log_p_tmp.tail(1) = prior.log_new_class -0.5*sum(arma::square(Y_list(i) - reg));
+      log_p_tmp.tail(1) = prior.log_new_class + sum(Y_list(i)%reg  - log(1 + exp(reg)));
+
+
       //-------------------------------------------------
-      // Add penalization
+      // Add penalization - multiple prior partitions
       if(psi > 0){
-        dist = marginal_vi(clustering_to_update, Z0,  H_minus_i + 1,i);
-        
-        log_p_tmp = log_p_tmp -  psi*dist;
+        distMat.set_size(H_minus_i +1, n_Z0);
+        dist.set_size(H_minus_i +1);
+
+        for(int j = 0; j < n_Z0; ++j){
+            distMat.col(j)= marginal_vi(clustering_to_update, Z0.col(j),  H_minus_i + 1,i);
+        }
+
+        for(int k = 0; k < H_minus_i + 1; ++k){
+            dist(k) = sum(distMat.row(k));
+        }                
+
+        log_p_tmp = log_p_tmp -  psi* dist;
       }
-      
-      
+
+
       //-------------------------------------------------
       //Normalize probabilities
       p_class = normalize_probs(log_p_tmp);
@@ -290,27 +336,27 @@ void DPGLINEAR::updateClass(int iter)
       clustering_to_update(i)= as<int>(wrap(Rcpp::sample(class_lab_minus_i, 1, FALSE, as<NumericVector>(wrap(p_class.t())))));
       // If a new class is sampled assign beta_new kernel
       if(clustering_to_update(i) == H_minus_i) {beta.slice(iter).row(H_minus_i) = beta_new;}
-      
-      
+
+
       // Update number of clusters
       unique_vals = unique(clustering_to_update);
       H0 = unique_vals.n_elem;
       // Update class_sizes
       class_size(clustering_to_update(i)) += 1;
-      
-    } else {
-      
-      
+
+  } else {
+
+
       // Observation is a singleton
       dist.set_size(H_minus_i + 1);
       log_p_tmp.set_size(H_minus_i + 1);
-      
+
       ///================ REORDERING PART ================== ///
       // Need to fix parameters associated to the cluster of the ith observation
       arma::mat beta_tmp = beta.slice(iter);
-      
+
       beta_tmp.row(clustering_to_update(i)).zeros();
-      
+
       // Reorder parameters such that there are no gaps
       arma::uvec index(H_minus_i + 1);
       // Create ordering vector
@@ -318,7 +364,7 @@ void DPGLINEAR::updateClass(int iter)
       index.tail(1) = clustering_to_update(i);
       // Actually reorder vector
       beta_tmp.rows(0, H_minus_i) = beta_tmp.rows(index);
-      
+
       // Substitute in the object
       beta.slice(iter) = beta_tmp;
       //.....................................................//
@@ -327,82 +373,98 @@ void DPGLINEAR::updateClass(int iter)
       // Update class sizes removing the i observation redordering
       class_size(clustering_to_update(i)) -= 1;
       class_size.head(H_minus_i +1) = class_size.elem(index);
-      
+
+      // compute penalization - multiple prior partitions
+      if(psi > 0){
+        distMat.set_size(H_minus_i +1, n_Z0);
+        dist.set_size(H_minus_i +1);
+
+        for(int j = 0; j < n_Z0; ++j){
+            distMat.col(j)= marginal_vi(clustering_to_update, Z0.col(j),  H_minus_i + 1,i);
+        }
+       for(int k = 0; k < H_minus_i + 1; ++k){
+            dist(k) = sum(distMat.row(k));
+        }
+      }       
       
       //-------------------------------------------------
-      // compute penalization
-      // Add penalization
-      if(psi > 0){
-        dist = marginal_vi(clustering_to_update, Z0, H_minus_i + 1,i);
-      }
-      
+ 
       // Relabel current clustering vector without i obs
       clustering_to_update.shed_row(i);
       clustering_to_update = relabel(clust_minus_i);
       ///================ ============== ================== ///
       // Vector of log probabilties
       log_p_tmp.head(H_minus_i) = prior.log_conditional(class_size.head(H_minus_i));
-      
+
       //-------------------------------------------------
       // Compute lilkelihood for observed classes
-      
+
       for(int h = 0; h < H_minus_i; ++h)
       {
         reg = (intercept(i, iter) + X_list(i)*beta.slice(iter).row(h).t());
-        log_lik = -0.5*sum(arma::square(Y_list(i) - reg));
+        log_lik = sum(Y_list(i)%reg  - log(1 + exp(reg)));
         log_p_tmp(h) += log_lik;
       }
-      
-      
+
+
       //---------------
       // Allocation probability to a new class - Using alg 8 from Neal(2000) m = 1 (lazy)
       // sample a new value for beta for the class H_minus_i + 1
       beta_new = rndpp_mvnormal(1, b0, Q0);
       reg = (intercept(i, iter) + X_list(i)*beta_new.t());
-      log_p_tmp.tail(1) = prior.log_new_class -0.5*sum(arma::square(Y_list(i) - reg));
-      
+      log_p_tmp.tail(1) = prior.log_new_class + sum(Y_list(i)%reg  - log(1 + exp(reg)));
+
+      //-------------------------------------------------
+      //-------------------------------------------------
+      // CHECK HERE FOR ERROR
+      //-------------------------------------------------
+      //-------------------------------------------------
       // Check for penalization
-      if(psi > 0){ log_p_tmp = log_p_tmp - psi*dist;}
-      
+      if(psi > 0){
+        log_p_tmp = log_p_tmp -  psi* dist;
+      }
+      //-------------------------------------------------
+
       //-------------------------------------------------
       //Normalize probabilities
       p_class = normalize_probs(log_p_tmp);
-      
-      
+
       //-------------------------------------------------
       // Sample class for observation i
       class_lab_minus_i = as<NumericVector>(wrap(seq_len(H_minus_i+1) -1));
       int class_for_i = as<int>(wrap(Rcpp::sample(class_lab_minus_i, 1, FALSE, as<NumericVector>(wrap(p_class.t())))));
-      
+
       // If a new class is sampled assign beta_new kernel
       if(class_for_i == H_minus_i) {beta.slice(iter).row(H_minus_i) = beta_new;}
-      
+
       // Update clustering
       clustering_to_update.insert_rows(i, 1);
       clustering_to_update(i) = class_for_i;
       unique_vals = unique(clustering_to_update);
-      
+
       // Update number of clusters
       H0 = unique_vals.n_elem;
       class_size(clustering_to_update(i)) += 1;
-    }
-    // ---- end ifelse ----- //
-    // reset utils vectors
-    class_size_minus_i.reset(); H_minus_i = 0;
-    clust_minus_i.reset();
-    log_p_tmp.reset(); p_class.reset();
-    unique_vals.reset(); clust_minus_i.reset();
-    dist.reset();
-    // class_lab_minus_i.assign(class_lab_minus_i.size(), 0);
-    
-    
-    
-    // ---- end for ----- //
   }
-  
-  
-  clustering.col(iter) = clustering_to_update;
-  // ---- end function ----- //
+  // ---- end ifelse ----- //
+  // reset utils vectors
+   class_size_minus_i.reset(); H_minus_i = 0;
+   clust_minus_i.reset();
+   log_p_tmp.reset(); p_class.reset();
+   unique_vals.reset(); clust_minus_i.reset();
+   dist.reset();
+   // class_lab_minus_i.assign(class_lab_minus_i.size(), 0);
+
+
+
+  // ---- end for ----- //
 }
+
+
+  clustering.col(iter) = clustering_to_update;
+// ---- end function ----- //
+}
+
+
 
 #endif
