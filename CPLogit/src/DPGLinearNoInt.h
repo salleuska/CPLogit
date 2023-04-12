@@ -68,7 +68,7 @@ public:
   //=========== METHODS =============//
   // Initialize prior values
   void setPrior();
-  void updateIntercept(int iter);
+//  void updateIntercept(int iter);
   void updateBeta(int iter);
   void updateClass(int iter);
 };

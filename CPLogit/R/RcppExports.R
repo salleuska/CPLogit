@@ -35,7 +35,7 @@ gibbsLinearCP <- function(X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha,
     .Call('_CPLogit_gibbsLinearCP', PACKAGE = 'CPLogit', X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha, a_prior, tau_prior, b_prior, Q_prior, n_iter0)
 }
 
-#' Grouped logistic regression using exchangeable prior.
+#' Grouped logistic regression using Centered partition process.
 #'
 #' This function does a gibbs sampling for a logistic regression model using a DP prior for 
 #' clustering regression coefficients. Sampling for the logistic regressions uses Polya-Gamma 
@@ -58,6 +58,29 @@ gibbsLogitCP <- function(X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha, 
     .Call('_CPLogit_gibbsLogitCP', PACKAGE = 'CPLogit', X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha, a_prior, tau_prior, b_prior, Q_prior, n_iter0)
 }
 
+#' Grouped logistic regression using Centered Partition process - multiple prior partitions
+#'
+#' This function does a gibbs sampling for a logistic regression model using a DP prior for 
+#' clustering regression coefficients. Sampling for the logistic regressions uses Polya-Gamma 
+#' data augmentation.
+#'
+#' @param X_list0 list of n_i x p matrices of covariates (including intercept)
+#' @param Y_list0 list of n_i x 1 vectors of response variable
+#' @param Z_prior matrix of possible partitions for clustering allocation
+#' @param psi_par value for the penalizations parameter
+#' @param H number or clusters
+#' @param H_upper upper limit for number of clusters
+#' @param alpha value for the Dirichlet Process concentration parameter
+#' @param a_prior mean of the normal prior on intercept
+#' @param tau_prior inverse of variance of the normal prior on intercept
+#' @param b_prior mean vector of the normal multivariate prior for the coefficients
+#' @param Q_prior covariance matrix of the normal multivariate prior for the coefficients
+#' @param n_iter0 total number of iterations
+#' @export
+gibbsLogitCPMultiple <- function(X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha, a_prior, tau_prior, b_prior, Q_prior, n_iter0) {
+    .Call('_CPLogit_gibbsLogitCPMultiple', PACKAGE = 'CPLogit', X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha, a_prior, tau_prior, b_prior, Q_prior, n_iter0)
+}
+
 #' Logistic regression using Polya-Gamma data augmentation.
 #'
 #' This function does a gibbs sampling for a logistic regression using Polya-Gamma 
@@ -66,6 +89,7 @@ gibbsLogitCP <- function(X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha, 
 #' @param Y n x 1 vector of response variable 
 #' @param X n x p matrix of covariates (including intercept)
 #' @param tau_prior inverse of variance of the normal prior on intercept
+#' @param a_prior mean of the normal prior on intercept
 #' @param b_prior mean vector of the normal multivariate prior for the coefficients
 #' @param Q_prior covariance matrix of the normal multivariate prior for the coefficients
 #' @param n_iter0 total number of iterations
@@ -81,12 +105,33 @@ gibbsLogit <- function(Y0, X0, a_prior, tau_prior, b_prior, Q_prior, n_iter0) {
 #' @param Y n x 1 vector of response variable 
 #' @param X n x p matrix of covariates (including intercept)
 #' @param tau_prior inverse of variance of the normal prior on intercept
+#' @param a_prior mean of the normal prior on intercept
 #' @param b_prior mean vector of the normal multivariate prior for the coefficients
 #' @param Q_prior covariance matrix of the normal multivariate prior for the coefficients
 #' @param n_iter0 total number of iterations
 #' @export
 gibbsLinear <- function(Y0, X0, a_prior, tau_prior, b_prior, Q_prior, n_iter0) {
     .Call('_CPLogit_gibbsLinear', PACKAGE = 'CPLogit', Y0, X0, a_prior, tau_prior, b_prior, Q_prior, n_iter0)
+}
+
+#' Grouped Bayesian linear regression - only regressors.
+#'
+#' This function does a gibbs sampling for a linear regression model with only regressors coef
+#' note: this is a trick to clustering means of a normal distributed data
+#'
+#' @param X_list0 list of n_i x p matrices of covariates (including intercept)
+#' @param Y_list0 list of n_i x 1 vectors of response variable
+#' @param Z_prior prior information on clustering
+#' @param psi_par value for the penalizations parameter
+#' @param H number or clusters
+#' @param H_upper upper limit for number of clusters
+#' @param alpha value for the Dirichlet Process concentration parameter
+#' @param b_prior mean vector of the normal multivariate prior for the coefficients
+#' @param Q_prior covariance matrix of the normal multivariate prior for the coefficients
+#' @param n_iter0 total number of iterations
+#' @export
+gibbsDensityCP <- function(X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha, b_prior, Q_prior, n_iter0) {
+    .Call('_CPLogit_gibbsDensityCP', PACKAGE = 'CPLogit', X_list0, Y_list0, Z_prior, psi_par, H, H_upper, alpha, b_prior, Q_prior, n_iter0)
 }
 
 rndpp_mvnormal <- function(n, mean, sigma) {

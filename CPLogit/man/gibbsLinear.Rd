@@ -7,6 +7,8 @@
 gibbsLinear(Y0, X0, a_prior, tau_prior, b_prior, Q_prior, n_iter0)
 }
 \arguments{
+\item{a_prior}{mean of the normal prior on intercept}
+
 \item{tau_prior}{inverse of variance of the normal prior on intercept}
 
 \item{b_prior}{mean vector of the normal multivariate prior for the coefficients}

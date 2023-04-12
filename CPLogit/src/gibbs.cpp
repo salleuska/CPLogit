@@ -7,6 +7,7 @@
 #include "DPGLogit.h"
 #include "DPGLogitMultiplePrior.h"
 #include "DPGLinear.h"
+#include "DPGLinearNoInt.h"
 #include "linearModel.h"
 
 
