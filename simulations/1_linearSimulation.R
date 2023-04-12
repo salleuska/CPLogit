@@ -15,7 +15,8 @@ getClassMAP = function(clustering_mcmc, burn, tab = FALSE){
 }
 #######################################
 ## load data
-load("simulation_discrete.RData")
+#load("simulation_discrete.RData")
+load("simulation_continuos.RData")
 
 Z_0 = Z_0 -1
 

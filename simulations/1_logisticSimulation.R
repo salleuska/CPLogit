@@ -1,5 +1,6 @@
 #######################################
 ## Centered Partition Processes: Informative Priors for Clustering
+## Code to reproduce simulation results
 ## Sally Paganin
 ## January 2021
 #######################################
@@ -18,7 +19,7 @@ getClassMAP = function(clustering_mcmc, burn, tab = FALSE){
 load("simulation_discrete.RData")
 
 ## Index clustering starting from 0
-Z_0 = Z_0 -1
+Z_0 = Z_0 - 1
 
 ###################################################
 ## 1) Estimate a glm using the true grouping 
@@ -97,7 +98,6 @@ dp_res = list(mean = odds_logit, lower = odds_logit_low, upper = odds_logit_up)
 
 ## Pariwise allocation matrix
 pair_mat_dp = mcclust::comp.psm(t(res$clustering[, burn:n_iter] + 1))
-
 ###################################################
 ## 3) Bayesian modeling - CP process, with baseline DP EPPF
 ## using  prior information on clustering with psi = 17
