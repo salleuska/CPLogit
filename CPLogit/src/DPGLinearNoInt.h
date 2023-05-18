@@ -173,9 +173,6 @@ void DPGLINEARNOINT::updateBeta(int iter){
   arma::mat xtk_tmp(p, 1, arma::fill::zeros);
   arma::uvec sel;
   
-  // utilities
-  arma::mat half_prod;
-  arma::vec k_j;
   // updated parameters
   arma::mat Q_star(p, p, arma::fill::zeros);
   arma::vec b_star(p, arma::fill::zeros);
@@ -189,8 +186,8 @@ void DPGLINEARNOINT::updateBeta(int iter){
       for(int j = 0; j < class_size(h); ++j)
       {
         // compute quadratic form X^T  X
-        quadratic_form = X_list(sel(j)).t()*X_list(sel(j));
-        xtk_tmp = X_list(sel(j)).t()*Y_list(sel(j));
+        quadratic_form += X_list(sel(j)).t()*X_list(sel(j));
+        xtk_tmp += X_list(sel(j)).t()*Y_list(sel(j)) + arma::inv(Q0)*b0;
       }
       
       Q_star = arma::inv(quadratic_form + arma::inv(Q0));

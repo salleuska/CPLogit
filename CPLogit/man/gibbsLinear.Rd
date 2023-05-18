@@ -7,6 +7,10 @@
 gibbsLinear(Y0, X0, a_prior, tau_prior, b_prior, Q_prior, n_iter0)
 }
 \arguments{
+\item{Y0}{n x 1 vector of response variable}
+
+\item{X0}{n x p matrix of covariates (including intercept)}
+
 \item{a_prior}{mean of the normal prior on intercept}
 
 \item{tau_prior}{inverse of variance of the normal prior on intercept}
@@ -16,10 +20,6 @@ gibbsLinear(Y0, X0, a_prior, tau_prior, b_prior, Q_prior, n_iter0)
 \item{Q_prior}{covariance matrix of the normal multivariate prior for the coefficients}
 
 \item{n_iter0}{total number of iterations}
-
-\item{Y}{n x 1 vector of response variable}
-
-\item{X}{n x p matrix of covariates (including intercept)}
 }
 \description{
 This function does a gibbs sampling for a linear regression model.

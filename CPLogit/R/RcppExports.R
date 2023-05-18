@@ -102,8 +102,8 @@ gibbsLogit <- function(Y0, X0, a_prior, tau_prior, b_prior, Q_prior, n_iter0) {
 #'
 #' This function does a gibbs sampling for a linear regression model.
 #'
-#' @param Y n x 1 vector of response variable 
-#' @param X n x p matrix of covariates (including intercept)
+#' @param Y0 n x 1 vector of response variable 
+#' @param X0 n x p matrix of covariates (including intercept)
 #' @param tau_prior inverse of variance of the normal prior on intercept
 #' @param a_prior mean of the normal prior on intercept
 #' @param b_prior mean vector of the normal multivariate prior for the coefficients
