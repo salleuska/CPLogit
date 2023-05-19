@@ -188,8 +188,8 @@ void DPGLINEAR::updateBeta(int iter){
       for(int j = 0; j < class_size(h); ++j)
       {
         // compute quadratic form X^T  X
-        quadratic_form = X_list(sel(j)).t()*X_list(sel(j));
-        xtk_tmp = X_list(sel(j)).t()*Y_list(sel(j));
+        quadratic_form += X_list(sel(j)).t()*X_list(sel(j));
+        xtk_tmp += X_list(sel(j)).t()*Y_list(sel(j));
       }
       
       Q_star = arma::inv(quadratic_form + arma::inv(Q0));
