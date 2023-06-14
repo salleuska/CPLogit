@@ -26,28 +26,26 @@ Be sure to have installed the following R packages
 	install.packages("mvtnorm")
 ```
 
-Download and install the package `CPLogit` using `devtools` and `Rcppp` packages
+Download and install the package `CPLogit` using `devtools` 
 
 ```r
-setwd("CPLogit/")
 library(devtools)
-
-clean_dll()
-build()
-install()
+devtools::install_github("salleuska/CPLogit", subdir="CPLogit")
 ```
-
-<!-- 
+or if you download the repo
+```r
 ## How to install 
 library(devtools)
 library(Rcpp)
 clean_dll()
-## to export Rcpp functiond
+
+## to export Rcpp functions
 compileAttributes()
 build()
 install()
 document()
- -->
+```
+
 ## Reproduce plots in Section 3.3
 
 To reproduce code of the prior probability distribution over the set partition space induced by the CP process, use script `Sec3.3_Prior_graphs.R`.
