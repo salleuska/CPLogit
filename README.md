@@ -1,6 +1,13 @@
 # Supplementary code for Bayesian linear and logistic regression using Centered Partition processes
 
-Code to reproduce results presented in [Centered Partition Processes: Informative Priors for Clustering](https://projecteuclid.org/journals/bayesian-analysis/volume-16/issue-1/Centered-Partition-Processes-Informative-Priors-for-Clustering-with-Discussion/10.1214/20-BA1197.full).
+Code to reproduce simulation results presented in  
+**Centered Partition Processes: Informative Priors for Clustering (with Discussion)**   
+by Sally Paganin, Amy H. Herring, Andrew F. Olshan, David B. Dunson  
+*Bayesian Analysis*. 16(1), 301-370, (March 2021)
+\[ 
+[Link](https://projecteuclid.org/journals/bayesian-analysis/volume-16/issue-1/Centered-Partition-Processes-Informative-Priors-for-Clustering-with-Discussion/10.1214/20-BA1197.full) | 
+[arXiV preprint](https://arxiv.org/abs/1901.10225)
+\]
 
 ## Installation
 
